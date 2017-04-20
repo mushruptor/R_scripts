@@ -115,8 +115,26 @@ install.packages("ICEbox")
 library(ICEbox)
 library(randomForest)
 
-stroke.rf <- randomForest(Outcome~., stroke, proximity=TRUE, keep.forest=FALSE)
-stroke.ice <- ice(object = stroke.rf, X = stroke, predictor = "MedB", frac_to_build = 0.1)
+#--- stroke ---
+y <- stroke$Outcome
+X <- stroke
+stroke.rf <- randomForest(X,y)
+stroke.ice <- ice(object = stroke.rf, X = X, y = y, predictor = "Outcome")
+stroke.dice <- dice(stroke.ice)
+plot(stroke.ice)
+plot(stroke.dice)
+
+#--- iris ---
+data(iris)
+iris$Species <- as.numeric(iris$Species)
+y <- iris$Species
+X <- iris
+iris.rf <- randomForest(X,y)
+getTree(iris.rf, 1, labelVar=TRUE)
+
+iris.ice <- ice(object = iris.rf, X = X, y = y, predictor = "Species")
+iris.dice <- dice(iris.ice)
+plot(iris.dice)
 
 #--- caret ----------------------------------------------------------
 install.packages("caret")
@@ -132,9 +150,23 @@ dotPlot(strokeImp)
 install.packages("C50")
 library(C50)
 
-modelRule <- C5.0(age~., data=stroke, rules=TRUE)
-#convert to factors first
+#--- iris ---
+data(iris)
+iris.c50 <- C5.0(Species~.,data=iris)
+plot(iris.c50, subtree = 3)
 
+iris.rules <- C5.0(Species~., data=iris, rules=TRUE)
+iris.rules
+summary(iris.rules)
+
+#--- stroke ---
+stroke$Outcome <- as.factor(stroke$Outcome)
+stroke.c50 <- C5.0(Outcome~., data=stroke)
+plot(stroke.c50, subtree = 5)
+
+stroke.rules <- C5.0(Outcome~., data=stroke, rules=TRUE)
+stroke.rules
+summary(stroke.rules)
 
 #--- explainvis -----------------------------------------------------
 install.packages("ExplainPrediction")
@@ -152,4 +184,7 @@ explainVis(modelRF, iris[trainIdxs,], iris[testIdxs,], method="EXPLAIN",visLevel
 #--- cubist ---------------------------------------------------------
 install.packages("Cubist")
 library(Cubist)
+library(MASS)
 
+stroke.cub <- cubist(x = stroke[, -13], y = stroke$Outcome)
+predict(stroke.cub, stroke[1:4, -13], neighbors = 5)
