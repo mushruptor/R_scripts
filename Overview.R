@@ -104,7 +104,7 @@ for (i in 1:(length(stroke.names) - 1)) {
 
 #--- mdsplot --------------------------------------------------------
 #?Regression on 2 Outcomeoptions?
-install.packages("RandomForest")
+install.packages("randomForest")
 library(randomForest)
 
 stroke.rf <- randomForest(Outcome~., stroke, proximity=TRUE, keep.forest=FALSE)
