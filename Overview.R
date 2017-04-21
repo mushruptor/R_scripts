@@ -116,10 +116,11 @@ library(ICEbox)
 library(randomForest)
 
 #--- stroke ---
-y <- stroke$Outcome
+y <- as.factor(stroke$Outcome)
 X <- stroke
 stroke.rf <- randomForest(X,y)
-stroke.ice <- ice(object = stroke.rf, X = X, y = y, predictor = "Outcome")
+stroke.ice <- ice(object = stroke.rf, X = X, predictor = "Age", predictfcn = function(object, newdata){
+  predict(object, newdata, type = "prob")[, 2]})
 stroke.dice <- dice(stroke.ice)
 plot(stroke.ice)
 plot(stroke.dice)
@@ -184,7 +185,23 @@ explainVis(modelRF, iris[trainIdxs,], iris[testIdxs,], method="EXPLAIN",visLevel
 #--- cubist ---------------------------------------------------------
 install.packages("Cubist")
 library(Cubist)
-library(MASS)
 
-stroke.cub <- cubist(x = stroke[, -13], y = stroke$Outcome)
-predict(stroke.cub, stroke[1:4, -13], neighbors = 5)
+#--- stroke ---
+stroke.cub <- cubist(x = stroke[, -13], y = as.numeric(stroke$Outcome))
+predict(stroke.cub, stroke[1:12, -13], neighbors = 5)
+
+trainIdxs <- sample(1:nrow(stroke), floor(0.8*nrow(stroke)))
+trainPred <- stroke[trainIdxs, -13]
+testPred <- stroke[-trainIdxs, -13]
+trainOutcome <- stroke$Outcome[trainIdxs]
+testOutcome <- stroke$Outcome[-trainIdxs]
+modelTree <- cubist(x = trainPred, y = as.numeric(trainOutcome))
+modelTree
+summary(modelTree)
+
+#--- iris ---
+data(iris)
+iris$Species <- as.numeric(iris$Species)
+iris.cub <- cubist(x = iris[, -5], y = iris$Species)
+predict(iris.cub, iris[1:4, -5], neighbors = 3)
+summary(iris.cub)
